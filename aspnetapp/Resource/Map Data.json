@@ -1,0 +1,38 @@
+{
+  "Maps": [
+    {
+      "Name": "one",
+      "Map": {
+        "StateObjects": {
+          "LIGHT1": [
+            0
+          ]
+        },
+        "ForwardObjects": {},
+        "PositionObjects": {},
+        "Objects": {}
+      },
+      "External": {
+        "A1A7A2A5A3A7A9A6A5E0": [
+          0.0,
+          -0.9764387,
+          0.0,
+          -0.215794921,
+          10.2076578,
+          0.07999992,
+          13.8845711
+        ]
+      }
+    },
+    {
+      "Name": "two",
+      "Map": {
+        "StateObjects": {},
+        "ForwardObjects": {},
+        "PositionObjects": {},
+        "Objects": {}
+      },
+      "External": {}
+    }
+  ]
+}

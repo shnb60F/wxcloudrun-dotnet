@@ -1,0 +1,74 @@
+{
+    "types": [
+        {
+            "token": [
+                "id",
+                "address",
+                "data"
+            ]
+        },
+        {
+            "type": "InitRequest",
+            "mapName": "{mapName}",
+            "token": "{token}"
+        },
+        {
+            "type": "InitResponse",
+            "token": "{newToken}",
+            "id": "{id}",
+            "data": [
+                "{datas}"
+            ]
+        },
+        {
+            "type": "UpdateRequest",
+            "mapName": "{mapName}",
+            "Map": {
+                "StateObjects": {
+                    "obj": [
+                        "{datas}"
+                    ]
+                },
+                "ForwardObjects": {},
+                "PositionObjects": {},
+                "Objects": {}
+            },
+            "External": {
+                "obj": [
+                    "{datas}"
+                ]
+            }
+        },
+        {
+            "type": "UpdateResponse",
+            "Map": {
+                "StateObjects": {
+                    "obj": [
+                        "{datas}"
+                    ]
+                },
+                "ForwardObjects": {},
+                "PositionObjects": {},
+                "Objects": {}
+            },
+            "External": {
+                "obj": [
+                    "{datas}"
+                ]
+            }
+        },
+        {
+            "type": "CloseRequest",
+            "mapName": "{mapName}",
+            "token": "{token}",
+            "data": [
+                "{datas}"
+            ]
+        },
+        {
+            "type": "CloseResponse",
+            "mapName": "{mapName}",
+            "token": "{newToken}"
+        }
+    ]
+}

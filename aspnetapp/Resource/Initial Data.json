@@ -1,0 +1,13 @@
+{
+    "Map": {
+        "StateObjects": {
+            "light1": [
+                1
+            ]
+        },
+        "ForwardObjects": {},
+        "PositionObjects": {},
+        "Objects": {}
+    },
+    "External": {}
+}
