@@ -1,6 +1,7 @@
-using System.Threading.Tasks.Dataflow;
+using System.Reflection;
 using aspnetapp;
 using aspnetapp.EF;
+using aspnetapp.Entity;
 using aspnetapp.Service;
 using aspnetapp.Utils;
 using Microsoft.AspNetCore.Mvc;
@@ -13,12 +14,18 @@ public class WeChatController : ControllerBase
     readonly GuardersService guardersService;
     readonly GuardersSessionManager guardersSessionManager;
     readonly JWTUtil jwtUtil;
+    readonly EnhancementSelectionService enhancementSelectionService;
+    readonly TreasureBoxService treasureBoxService;
 
-    public WeChatController(GuardersService guardersService, GuardersSessionManager guardersSessionManager, JWTUtil jwtUtil)
+    Assembly assembly = Assembly.GetExecutingAssembly();
+
+    public WeChatController(GuardersService guardersService, GuardersSessionManager guardersSessionManager, JWTUtil jwtUtil, EnhancementSelectionService enhancementSelectionService, TreasureBoxService treasureBoxService)
     {
         this.guardersService = guardersService;
         this.guardersSessionManager = guardersSessionManager;
         this.jwtUtil = jwtUtil;
+        this.enhancementSelectionService = enhancementSelectionService;
+        this.treasureBoxService = treasureBoxService;
     }
 
     [HttpPost("login")]
@@ -65,7 +72,7 @@ public class WeChatController : ControllerBase
     }
 
     [HttpPost("logoff")]
-    public async Task<IActionResult> Logoff([FromBody] LogOffData logOffData, [FromHeader] string userId)
+    public async Task<IActionResult> Logoff([FromBody] OnlyToken logOffData, [FromHeader] string userId)
     {
         if (await guardersService.Logoff($"{userId}"))
         {
@@ -75,6 +82,77 @@ public class WeChatController : ControllerBase
         {
             return BadRequest("User not found.");
         }
+    }
+
+    [HttpPost("guarder/getall")]
+    public async Task<IActionResult> GuarderGetAll([FromBody] OnlyToken onlyToken, [FromHeader] string userId)
+    {
+        ICollection<GuarderDB> guarderDBs = await guardersService.GuarderGetAll(userId);
+
+        JArray treasureBoxArray = new JArray();
+
+        foreach (var guarderDB in guarderDBs)
+        {
+            JObject treasureBoxObject = new JObject
+            {
+                { "GuarderType", (int)guarderDB.GuarderType },
+                { "GuarderLevel", guarderDB.GuarderLevel },
+                { "GuarderKakera", guarderDB.GuarderKakera }
+            };
+
+            treasureBoxArray.Add(treasureBoxObject);
+        }
+
+        JObject pairs = new JObject
+        {
+            { "GuarderDBs", treasureBoxArray }
+        };
+
+        return Ok(pairs.ToString());
+    }
+
+    [HttpPost("treasurebox/getall")]
+    public async Task<IActionResult> TreasureBoxGetAll([FromBody] OnlyToken getAllData, [FromHeader] string userId)
+    {
+        ICollection<TreasureBoxDB> treasureBoxDBs = await treasureBoxService.GetAll(userId);
+
+        JArray treasureBoxArray = new JArray();
+
+        foreach (var treasureBoxDB in treasureBoxDBs)
+        {
+            JObject treasureBoxObject = new JObject
+            {
+                { "TreasureBoxId", treasureBoxDB.TreasureBoxId },
+                { "TreasureBoxType", (int)treasureBoxDB.TreasureBoxType }
+            };
+
+            treasureBoxArray.Add(treasureBoxObject);
+        }
+
+        JObject pairs = new JObject
+        {
+            { "TreasureBoxDBs", treasureBoxArray }
+        };
+
+        return Ok(pairs.ToString());
+    }
+
+    [HttpPost("user/getall")]
+    public async Task<IActionResult> UserGetAll([FromBody] OnlyToken onlyToken, [FromHeader] string userId)
+    {
+        UserDB userDB = await guardersService.UserGetAll(userId);
+
+        JObject userObject = new JObject
+        {
+            { "UserName", userDB.UserName },
+            { "UserXP", userDB.UserXP },
+            { "UserLevel", userDB.UserLevel },
+            { "UserGold", userDB.UserGold },
+            { "UserAP", userDB.UserAP },
+            { "UserCreatedAt", userDB.UserCreatedAt }
+        };
+
+        return Ok(userObject.ToString());
     }
 
     [HttpPost("guarder/create")]
@@ -106,28 +184,67 @@ public class WeChatController : ControllerBase
     }
 
     [HttpPost("question/create")]
-    public IActionResult QuestionCreate([FromBody] QuestionCreateData questionCreateData, [FromHeader] string userId)
+    public async Task<IActionResult> QuestionCreate([FromBody] QuestionCreateData questionCreateData, [FromHeader] string userId)
     {
         string questionID = questionCreateData.QuestionID;
+        GuardersSession guardersSession = new GuardersSession { DeadLine = DateTime.Now.AddMinutes(60), UserId = userId, QuestionID = questionID, TimeFrame = 0 };
+        List<GuarderDB> guarderDBs = await guardersService.GuarderSelect(userId);
 
-        guardersSessionManager.AddSession((userId, questionID));
+        foreach (var guarderDB in guarderDBs)
+        {
+            string key = $"{guarderDB.GuarderType}";
+            string className = $"aspnetapp.Entity.{guarderDB.GuarderType}";
+            // 根据类名获取类型信息
+            Type type = assembly.GetType(className);
+            if (type == null)
+            {
+                throw new Exception($"{userId} {questionCreateData.QuestionID}: Type '{className}' not found.");
+            }
+            IEntity entity = (IEntity)Activator.CreateInstance(type);
+            ((Entity)entity).AdjustForLevel((short)guarderDB.GuarderLevel);
+            guardersSession.AddEntity(key, entity);
+        }
+        guardersSession.Init();
+        guardersSessionManager.AddSession((userId, questionID), guardersSession);
         return Ok();
     }
 
-    [HttpPost("question/getenhancement")]
-    public IActionResult QuestionGetEnhancement([FromBody] QuestionGetEnhancementData questionGetEnhancementData, [FromHeader] string userId)
-    { 
-        return Ok(EnhancementSelectionService.GetEnhancement());
+    [HttpPost("question/getenhancements")]
+    public IActionResult QuestionGetEnhancements([FromBody] QuestionGetEnhancementData questionGetEnhancementData, [FromHeader] string userId)
+    {
+        string questionID = questionGetEnhancementData.QuestionID;
+
+        try
+        {
+            GuardersSession guardersSession = guardersSessionManager.GetSession((userId, questionID));
+            EnhancementType[] enhancementTypes = enhancementSelectionService.GetEnhancements(guardersSession);
+            guardersSessionManager.SetEnhancement((userId, questionID), enhancementTypes);
+            Console.WriteLine("QuestionGetEnhancements:" + enhancementTypes.ToString());
+            return Ok(enhancementTypes);
+        }
+        catch (System.Exception)
+        {
+            return BadRequest("the session is expire");
+        }
+        // return Ok(new EnhancementType[] { EnhancementType.ArcherAIDown1p, EnhancementType.ArcherDamageUp1p, EnhancementType.ArcherPiercingUp5p });
     }
 
     [HttpPost("question/enhancement")]
-    public IActionResult QuestionEnhancement([FromBody] QuestionEnhancementData questionEnhancementData, [FromHeader] string userId)
+    public IActionResult QuestionEnhancement([FromBody] QuestionEnhancementsData questionEnhancementsData, [FromHeader] string userId)
     {
-        string questionID = questionEnhancementData.QuestionID;
-        EnhancementType enhancementType = questionEnhancementData.EnhancementType;
+        string questionID = questionEnhancementsData.QuestionID;
 
-        guardersSessionManager.GetSession((userId, questionID)).enhancements.Add(enhancementType);
-        return Ok();
+        try
+        {
+            if (!guardersSessionManager.UpdateEnhancement((userId, questionID), questionEnhancementsData.enhancementType))
+                return BadRequest("the session is not ready");
+            Console.WriteLine("QuestionEnhancement:" + questionEnhancementsData.enhancementType.ToString());
+            return Ok();
+        }
+        catch (System.Exception)
+        {
+            return BadRequest("the session is expire");
+        }
     }
 
     [HttpPost("question/clear")]
@@ -136,26 +253,67 @@ public class WeChatController : ControllerBase
         string questionID = questionClearData.QuestionID;
         string data = questionClearData.Data;
         long timeFrame = questionClearData.TimeFrame;
+        if (string.IsNullOrEmpty(questionID))
+            return BadRequest("QuestionID is null or empty");
 
         GuardersSession guardersSession = new GuardersSession { UserId = userId, QuestionID = questionID, TimeFrame = timeFrame };
-        guardersSession.ReadJson(data);
+        try
+        {
+            guardersSession.ReadJson(data);
+        }
+        catch (Exception)
+        {
+            guardersSessionManager.RemoveSession((userId, questionID));
+            Console.WriteLine($"fail: QuestionClear: JSON Data is null");
+            return BadRequest("JSON Data is null");
+        }
 
-        //UpdateSession是否更新成功
         if (guardersSessionManager.SessionClear((userId, questionID), guardersSession))
         {
             await guardersService.QuestionClear(
-                new QuestionDB { UserId = userId, QuestionID = questionID },
-            new TreasureBoxDB { TreasureBoxId = $"{Guid.NewGuid()}", TreasureBoxType = TreasureBoxType.Rare, UserId = userId }, 1);
+                new QuestionDB { UserId = userId, QuestionID = questionID, QuestionStar = 3, QuestionBestTime = (int)timeFrame },
+                treasureBoxService.GetBox(userId),
+                1);
+            guardersSessionManager.RemoveSession((userId, questionID));
             return Ok();
         }
         else
         {
+            guardersSessionManager.RemoveSession((userId, questionID));
             return BadRequest("Failed to clear question.");
         }
     }
 
+    [HttpPost("treasurebox/getbox")]
+    public async Task<IActionResult> GetBox([FromHeader] string userId)
+    {
+        TreasureBoxDB treasureBoxDB = treasureBoxService.GetBox(userId);
+        try
+        {
+            await treasureBoxService.AddBox(treasureBoxDB);
+        }
+        catch (NotFiniteNumberException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+        JObject pairs = new JObject();
+        pairs["TreasureBoxId"] = treasureBoxDB.TreasureBoxId;
+        pairs["TreasureBoxType"] = (int)treasureBoxDB.TreasureBoxType;
+        return Ok($"{pairs}");
+    }
+
+    [HttpPost("treasurebox/openbox")]
+    public async Task<IActionResult> OpenBox([FromBody] TreasureBoxOpenData treasureBoxOpenData, [FromHeader] string userId)
+    {
+        (long, long) gohobiProperty = await treasureBoxService.OpenBox(treasureBoxOpenData.TreasureBoxId);
+        JObject pairs = new JObject();
+        pairs["UserGold"] = gohobiProperty.Item1;
+        pairs["GuarderKakera"] = (int)gohobiProperty.Item2;
+        return Ok($"{pairs}");
+    }
+
     [HttpPost("user/levelup")]
-    public async Task<IActionResult> UserLevelUp([FromBody] UserLevelUpData userLevelUpData, [FromHeader] string userId)
+    public async Task<IActionResult> UserLevelUp([FromBody] OnlyToken userLevelUpData, [FromHeader] string userId)
     {
         if (await guardersService.UserLevelUp(userId))
         {
@@ -168,15 +326,15 @@ public class WeChatController : ControllerBase
     }
 }
 
+public class OnlyToken
+{
+    public string Token { get; set; } = "";
+}
+
 public class LoginData
 {
     public string Code { get; set; } = "";
     public string Name { get; set; } = "";
-}
-
-public class LogOffData
-{
-    public string Token { get; set; } = "";
 }
 
 public class GuarderCreateData
@@ -203,11 +361,11 @@ public class QuestionGetEnhancementData
     public string QuestionID { get; set; } = "";
 }
 
-public class QuestionEnhancementData
+public class QuestionEnhancementsData
 {
     public string Token { get; set; } = "";
     public string QuestionID { get; set; } = "";
-    public EnhancementType EnhancementType { get; set; }
+    public EnhancementType enhancementType { get; set; }
 }
 
 public class QuestionClearData
@@ -229,9 +387,4 @@ public class TreasureBoxOpenData
 {
     public string Token { get; set; } = "";
     public string TreasureBoxId { get; set; } = "";
-}
-
-public class UserLevelUpData
-{
-    public string Token { get; set; } = "";
 }

@@ -1,6 +1,6 @@
-
 using aspnetapp.Entity;
-using aspnetapp.Service;
+
+namespace aspnetapp.Service;
 
 public enum EnhancementType
 {
@@ -13,11 +13,18 @@ public enum EnhancementType
     /// </summary>
     ArcherPiercingUp5p,
     /// <summary>
-    /// 弓箭手攻速强化10%
+    /// 弓箭手攻击间隔（Attack Interval）减少10%
     /// </summary>
-    ArcherASUp1p
+    ArcherAIDown1p,
+    /// <summary>
+    /// 弓箭手攻击次数增加100%
+    /// </summary>
+    ArcherShoutCountUp10p,
 }
 
+/// <summary>
+/// 应用强化功能
+/// </summary>
 public static class EnhancementSelection
 {
     // "伤害强化": "强化伤害(Damage),无上限",
@@ -26,7 +33,7 @@ public static class EnhancementSelection
     // "多重射击": "增加释放次数,无上限"
 
     /// <summary>
-    /// 强化,并且更新会话死线，状态
+    /// 应用强化
     /// </summary>
     /// <param name="guardersSession"></param>
     /// <param name="enhancementType"></param>
@@ -52,12 +59,21 @@ public static class EnhancementSelection
                     }
                 }
                 break;
-            case EnhancementType.ArcherASUp1p:
+            case EnhancementType.ArcherAIDown1p:
                 foreach (dynamic guarder in guardersSession.entitys.Values)
                 {
                     if (guarder is Archer)
                     {
-                        guarder.SetCD(0.1f, false);
+                        guarder.CDPercent -= 0.1f;
+                    }
+                }
+                break;
+            case EnhancementType.ArcherShoutCountUp10p:
+                foreach (dynamic guarder in guardersSession.entitys.Values)
+                {
+                    if (guarder is Archer)
+                    {
+                        guarder.ShoutCount += 1;
                     }
                 }
                 break;

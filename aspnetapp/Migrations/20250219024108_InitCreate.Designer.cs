@@ -11,8 +11,8 @@ using aspnetapp;
 namespace aspnetapp.Migrations
 {
     [DbContext(typeof(GuardersContext))]
-    [Migration("20241229061510_GuardersCreate")]
-    partial class GuardersCreate
+    [Migration("20250219024108_InitCreate")]
+    partial class InitCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -21,7 +21,7 @@ namespace aspnetapp.Migrations
                 .HasAnnotation("ProductVersion", "6.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
-            modelBuilder.Entity("aspnetapp.EF.Guarder", b =>
+            modelBuilder.Entity("aspnetapp.EF.GuarderDB", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("varchar(255)");
@@ -29,10 +29,10 @@ namespace aspnetapp.Migrations
                     b.Property<int>("GuarderType")
                         .HasColumnType("int");
 
-                    b.Property<int?>("GuarderKakera")
+                    b.Property<int>("GuarderKakera")
                         .HasColumnType("int");
 
-                    b.Property<short?>("GuarderLevel")
+                    b.Property<short>("GuarderLevel")
                         .HasColumnType("smallint");
 
                     b.HasKey("UserId", "GuarderType");
@@ -40,15 +40,19 @@ namespace aspnetapp.Migrations
                     b.ToTable("Guarders");
                 });
 
-            modelBuilder.Entity("aspnetapp.EF.TreasureBox", b =>
+            modelBuilder.Entity("aspnetapp.EF.TreasureBoxDB", b =>
                 {
                     b.Property<string>("TreasureBoxId")
                         .HasColumnType("varchar(255)");
+
+                    b.Property<DateTime>("TreasureBoxCreateAt")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<int>("TreasureBoxType")
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
+                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.HasKey("TreasureBoxId");
@@ -58,27 +62,28 @@ namespace aspnetapp.Migrations
                     b.ToTable("TreasureBoxs");
                 });
 
-            modelBuilder.Entity("aspnetapp.EF.User", b =>
+            modelBuilder.Entity("aspnetapp.EF.UserDB", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<short?>("UserAP")
+                    b.Property<short>("UserAP")
                         .HasColumnType("smallint");
 
                     b.Property<DateTime>("UserCreatedAt")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<long?>("UserGold")
+                    b.Property<long>("UserGold")
                         .HasColumnType("bigint");
 
-                    b.Property<short?>("UserLevel")
+                    b.Property<short>("UserLevel")
                         .HasColumnType("smallint");
 
                     b.Property<string>("UserName")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("UserXP")
+                    b.Property<int>("UserXP")
                         .HasColumnType("int");
 
                     b.HasKey("UserId");
@@ -86,7 +91,7 @@ namespace aspnetapp.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Question", b =>
+            modelBuilder.Entity("QuestionDB", b =>
                 {
                     b.Property<string>("UserId")
                         .HasColumnType("varchar(255)");
@@ -94,10 +99,10 @@ namespace aspnetapp.Migrations
                     b.Property<string>("QuestionID")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<int?>("QuestionBestTime")
+                    b.Property<int>("QuestionBestTime")
                         .HasColumnType("int");
 
-                    b.Property<short?>("QuestionStar")
+                    b.Property<short>("QuestionStar")
                         .HasColumnType("smallint");
 
                     b.HasKey("UserId", "QuestionID");
@@ -105,9 +110,9 @@ namespace aspnetapp.Migrations
                     b.ToTable("Questions");
                 });
 
-            modelBuilder.Entity("aspnetapp.EF.Guarder", b =>
+            modelBuilder.Entity("aspnetapp.EF.GuarderDB", b =>
                 {
-                    b.HasOne("aspnetapp.EF.User", "User")
+                    b.HasOne("aspnetapp.EF.UserDB", "User")
                         .WithMany("Guarders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -116,18 +121,20 @@ namespace aspnetapp.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("aspnetapp.EF.TreasureBox", b =>
+            modelBuilder.Entity("aspnetapp.EF.TreasureBoxDB", b =>
                 {
-                    b.HasOne("aspnetapp.EF.User", "User")
+                    b.HasOne("aspnetapp.EF.UserDB", "User")
                         .WithMany("TreasureBoxs")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Question", b =>
+            modelBuilder.Entity("QuestionDB", b =>
                 {
-                    b.HasOne("aspnetapp.EF.User", "User")
+                    b.HasOne("aspnetapp.EF.UserDB", "User")
                         .WithMany("Questions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -136,7 +143,7 @@ namespace aspnetapp.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("aspnetapp.EF.User", b =>
+            modelBuilder.Entity("aspnetapp.EF.UserDB", b =>
                 {
                     b.Navigation("Guarders");
 

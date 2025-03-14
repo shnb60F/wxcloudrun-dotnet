@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace aspnetapp.Migrations
 {
-    public partial class GuardersCreate : Migration
+    public partial class InitCreate : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -18,12 +18,12 @@ namespace aspnetapp.Migrations
                 {
                     UserId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    UserName = table.Column<string>(type: "longtext", nullable: true)
+                    UserName = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    UserXP = table.Column<int>(type: "int", nullable: true),
-                    UserLevel = table.Column<short>(type: "smallint", nullable: true),
-                    UserGold = table.Column<long>(type: "bigint", nullable: true),
-                    UserAP = table.Column<short>(type: "smallint", nullable: true),
+                    UserXP = table.Column<int>(type: "int", nullable: false),
+                    UserLevel = table.Column<short>(type: "smallint", nullable: false),
+                    UserGold = table.Column<long>(type: "bigint", nullable: false),
+                    UserAP = table.Column<short>(type: "smallint", nullable: false),
                     UserCreatedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false)
                 },
                 constraints: table =>
@@ -39,8 +39,8 @@ namespace aspnetapp.Migrations
                     UserId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     GuarderType = table.Column<int>(type: "int", nullable: false),
-                    GuarderLevel = table.Column<short>(type: "smallint", nullable: true),
-                    GuarderKakera = table.Column<int>(type: "int", nullable: true)
+                    GuarderLevel = table.Column<short>(type: "smallint", nullable: false),
+                    GuarderKakera = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -62,8 +62,8 @@ namespace aspnetapp.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     QuestionID = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    QuestionStar = table.Column<short>(type: "smallint", nullable: true),
-                    QuestionBestTime = table.Column<int>(type: "int", nullable: true)
+                    QuestionStar = table.Column<short>(type: "smallint", nullable: false),
+                    QuestionBestTime = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -84,7 +84,8 @@ namespace aspnetapp.Migrations
                     TreasureBoxId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     TreasureBoxType = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "varchar(255)", nullable: true)
+                    TreasureBoxCreateAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UserId = table.Column<string>(type: "varchar(255)", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4")
                 },
                 constraints: table =>
@@ -94,7 +95,8 @@ namespace aspnetapp.Migrations
                         name: "FK_TreasureBoxs_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
-                        principalColumn: "UserId");
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Cascade);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
 

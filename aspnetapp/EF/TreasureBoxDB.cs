@@ -6,13 +6,14 @@ namespace aspnetapp.EF;
 public class TreasureBoxDB
 {
     [Key]
-    public string? TreasureBoxId { get; set; }
+    public string TreasureBoxId { get; set; }
     public TreasureBoxType TreasureBoxType { get; set; }
+    public DateTime TreasureBoxCreateAt { get; set; }
 
-    public string? UserId { get; set; }
+    public string UserId { get; set; }
 
     [ForeignKey("UserId")]
-    public virtual UserDB? User { get; set; }
+    public virtual UserDB User { get; set; }
 }
 
 public enum TreasureBoxType
