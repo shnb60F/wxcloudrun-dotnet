@@ -6,15 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>57393389627611478466</UserSecretsId>
   </PropertyGroup>
-  
-  <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <RuntimeIdentifiers>linux-musl-x64</RuntimeIdentifiers>
-    <SelfContained>true</SelfContained>
-    <PublishSingleFile>true</PublishSingleFile>
-    <PublishReadyToRun>true</PublishReadyToRun>
-    <TrimMode>Link</TrimMode>
-  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="JWT" Version="11.0.0" />
