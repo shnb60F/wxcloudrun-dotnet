@@ -27,7 +27,8 @@ namespace aspnetapp
             if (!optionsBuilder.IsConfigured)
             {
                 var connstr = "server=localhost;port=3306;user=root;password=123456;database=guarders;";
-                optionsBuilder.UseMySql(connstr, ServerVersion.AutoDetect(connstr));
+                optionsBuilder.UseMySql(connstr, ServerVersion.AutoDetect(connstr))
+                    .UseLowerCaseNamingConvention(); // 所有表名自动转为小写
             }
             Console.WriteLine("GuardersContext OnConfigured Debug");
 #else
@@ -40,7 +41,7 @@ Console.WriteLine("GuardersContext OnConfiguring Release");
                 var host = addressParts?[0];
                 var port = addressParts?[1];
                 var connstr = $"server={host};port={port};user={username};password={password};database=guarders";
-                optionsBuilder.UseMySql(connstr, Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7.18-mysql"));
+                optionsBuilder.UseMySql(connstr, Microsoft.EntityFrameworkCore.ServerVersion.Parse("5.7.18-mysql"))
                     .UseLowerCaseNamingConvention(); // 所有表名自动转为小写
             }
 Console.WriteLine("GuardersContext OnConfigured Release");
